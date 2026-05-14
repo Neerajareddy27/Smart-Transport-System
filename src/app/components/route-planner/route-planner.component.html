@@ -1,0 +1,224 @@
+<div class="route-planner-container">
+  <div class="page-header">
+    <h1>
+      <i class="fas fa-map"></i> Route Planner
+    </h1>
+    <p class="lead">Find the best route to your destination</p>
+  </div>
+
+  <div class="row">
+    <!-- Search Form -->
+    <div class="col-lg-4">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-search"></i> Search Routes
+          </h5>
+        </div>
+        <div class="card-body">
+          <form [formGroup]="routeForm" (ngSubmit)="searchRoutes()">
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="fas fa-map-marker"></i> From
+              </label>
+              <select
+                class="form-control"
+                formControlName="startLocation"
+              >
+                <option value="" disabled>Select start location...</option>
+                <option *ngFor="let loc of locations" [value]="loc.id">
+                  {{ loc.address }} ({{ loc.city }})
+                </option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="fas fa-map-marker"></i> To
+              </label>
+              <select
+                class="form-control"
+                formControlName="endLocation"
+              >
+                <option value="" disabled>Select destination...</option>
+                <option *ngFor="let loc of locations" [value]="loc.id">
+                  {{ loc.address }} ({{ loc.city }})
+                </option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">
+                <i class="fas fa-calendar"></i> Departure Time
+              </label>
+              <input
+                type="datetime-local"
+                class="form-control"
+                formControlName="departureTime"
+              />
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  id="accessibleRoutes"
+                  formControlName="preferAccessibleRoutes"
+                />
+                <label class="form-check-label" for="accessibleRoutes">
+                  <i class="fas fa-wheelchair"></i> Accessible Routes
+                </label>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <div class="form-check">
+                <input
+                  type="checkbox"
+                  class="form-check-input"
+                  id="fewestTransfers"
+                  formControlName="preferFewestTransfers"
+                />
+                <label class="form-check-label" for="fewestTransfers">
+                  <i class="fas fa-code-branch"></i> Fewest Transfers
+                </label>
+              </div>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button
+                type="submit"
+                class="btn btn-primary"
+                [disabled]="isSearching"
+              >
+                <span *ngIf="isSearching">
+                  <i class="fas fa-spinner fa-spin"></i> Searching...
+                </span>
+                <span *ngIf="!isSearching">
+                  <i class="fas fa-search"></i> Search Routes
+                </span>
+              </button>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                (click)="clearFilters()"
+              >
+                <i class="fas fa-redo"></i> Clear Filters
+              </button>
+            </div>
+          </form>
+
+          <!-- Search History -->
+          <div *ngIf="searchHistory.length > 0" class="mt-4">
+            <h6>Recent Searches</h6>
+            <div class="list-group">
+              <button
+                *ngFor="let search of searchHistory"
+                type="button"
+                class="list-group-item list-group-item-action"
+              >
+                <small>{{ search.startLocation.address }} → {{ search.endLocation.address }}</small>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div class="col-lg-8">
+      <!-- Error Message -->
+      <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show">
+        <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+      </div>
+
+      <!-- Alternative Routes -->
+      <div *ngIf="alternativeRoutes.length > 0" class="routes-list">
+        <h5 class="mb-3">
+          Found {{ alternativeRoutes.length }} route(s)
+        </h5>
+
+        <div
+          *ngFor="let route of alternativeRoutes; let i = index"
+          class="card route-card mb-3"
+          [class.selected]="selectedRoute === route"
+        >
+          <div class="card-body">
+            <div class="row align-items-center">
+              <div class="col-md-8">
+                <h6 class="mb-2">
+                  Route: {{ route.route.routeNumber }} - {{ route.route.name }}
+                </h6>
+                <div class="route-details">
+                  <span class="badge bg-info me-2">
+                    <i class="fas fa-hourglass-end"></i>
+                    {{ getDurationDisplay(route.totalDuration) }}
+                  </span>
+                  <span class="badge bg-secondary me-2">
+                    <i class="fas fa-code-branch"></i>
+                    {{ route.transfers }} transfers
+                  </span>
+                  <span [class]="'badge bg-' + getTrafficClass(route.trafficCondition)">
+                    <i class="fas fa-traffic-light"></i>
+                    {{ route.trafficCondition }}
+                  </span>
+                </div>
+                <div class="time-info mt-2 text-muted">
+                  <small>
+                    Depart: {{ route.departureTime | date: 'short' }} →
+                    Arrive: {{ route.arrivalTime | date: 'short' }}
+                  </small>
+                </div>
+              </div>
+              <div class="col-md-4 text-end">
+                <div class="price mb-3">
+                  <h4>{{ getPriceDisplay(route.price) }}</h4>
+                </div>
+                <button
+                  type="button"
+                  class="btn btn-primary btn-sm me-2"
+                  (click)="selectRoute(route)"
+                >
+                  <i class="fas fa-check"></i> Select
+                </button>
+                <button
+                  type="button"
+                  class="btn btn-outline-primary btn-sm"
+                  (click)="addFavoriteRoute(route.route.id)"
+                >
+                  <i class="fas fa-star"></i> Favorite
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selected Route Details -->
+      <div *ngIf="selectedRoute" class="card bg-light">
+        <div class="card-header bg-success text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-check-circle"></i> Route Confirmed
+          </h5>
+        </div>
+        <div class="card-body">
+          <p>You've selected: <strong>{{ selectedRoute.route.name }}</strong></p>
+          <p>
+            Departure: <strong>{{ selectedRoute.departureTime | date: 'short' }}</strong>
+          </p>
+          <p>Arrival: <strong>{{ selectedRoute.arrivalTime | date: 'short' }}</strong></p>
+          <button class="btn btn-success">
+            <i class="fas fa-bookmark"></i> Book Route
+          </button>
+        </div>
+      </div>
+
+      <!-- Empty State -->
+      <div *ngIf="alternativeRoutes.length === 0 && !isSearching" class="text-center py-5">
+        <i class="fas fa-inbox" style="font-size: 3rem; color: #ccc"></i>
+        <p class="text-muted mt-3">Start searching to see available routes</p>
+      </div>
+    </div>
+  </div>
+</div>

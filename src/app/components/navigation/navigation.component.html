@@ -1,0 +1,102 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+  <div class="container-fluid">
+    <a class="navbar-brand" routerLink="/">
+      <i class="fas fa-bus"></i> Smart City Transport
+    </a>
+    <button
+      class="navbar-toggler"
+      type="button"
+      (click)="toggleNavbar()"
+      [attr.aria-expanded]="!isCollapsed"
+    >
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" [class.show]="!isCollapsed">
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/dashboard" routerLinkActive="active">
+            <i class="fas fa-home"></i> Dashboard
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/route-planner" routerLinkActive="active">
+            <i class="fas fa-map"></i> Route Planner
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/transit-map" routerLinkActive="active">
+            <i class="fas fa-map-marked-alt"></i> Transit Map
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" routerLink="/admin" routerLinkActive="active">
+            <i class="fas fa-cogs"></i> Admin
+          </a>
+        </li>
+
+        <!-- Alerts Dropdown -->
+        <li class="nav-item dropdown">
+          <a
+            class="nav-link dropdown-toggle position-relative"
+            href="#"
+            id="alertsDropdown"
+            role="button"
+            data-bs-toggle="dropdown"
+            aria-expanded="false"
+          >
+            <i class="fas fa-bell"></i>
+            <span
+              class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
+              *ngIf="(alerts$ | async)?.length"
+            >
+              {{ (alerts$ | async)?.length }}
+            </span>
+          </a>
+          <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="alertsDropdown">
+            <li *ngFor="let alert of highPriorityAlerts; let first = first">
+              <a
+                class="dropdown-item"
+                href="#"
+                [class.unread]="!alert.read"
+                (click)="markAlertAsRead(alert, $event)"
+              >
+                <small class="text-muted">{{ alert.timestamp | date: 'short' }}</small>
+                <p class="mb-0">{{ alert.title }}</p>
+              </a>
+            </li>
+            <li *ngIf="(alerts$ | async)?.length; else noAlerts">
+              <hr class="dropdown-divider" />
+            </li>
+            <ng-template #noAlerts>
+              <li><a class="dropdown-item text-center">No alerts</a></li>
+            </ng-template>
+            <li *ngIf="(alerts$ | async)?.length">
+              <a class="dropdown-item text-center" routerLink="/alerts">
+                View all alerts
+              </a>
+            </li>
+            <li *ngIf="(alerts$ | async)?.length">
+              <button class="dropdown-item text-danger" (click)="clearAllAlerts()">
+                Clear all
+              </button>
+            </li>
+          </ul>
+        </li>
+
+        <!-- Connection Status -->
+        <li class="nav-item">
+          <span class="nav-link">
+            <i
+              class="fas"
+              [class.fa-wifi]="(connectionStatus$ | async)"
+              [class.fa-wifi-slash]="!(connectionStatus$ | async)"
+              [class.text-success]="(connectionStatus$ | async)"
+              [class.text-danger]="!(connectionStatus$ | async)"
+            ></i>
+          </span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</nav>

@@ -1,0 +1,188 @@
+<div class="dashboard-container">
+  <div class="page-header">
+    <h1>
+      <i class="fas fa-tachometer-alt"></i> Transportation System Dashboard
+    </h1>
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="isLoading" class="alert alert-info">
+    <i class="fas fa-spinner fa-spin"></i> Loading dashboard data...
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="errorMessage" class="alert alert-danger">
+    {{ errorMessage }}
+  </div>
+
+  <!-- System Health Overview -->
+  <div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+      <div class="card stat-card">
+        <div class="card-body">
+          <h6 class="card-title text-muted">System Health</h6>
+          <div class="d-flex align-items-center justify-content-between">
+            <h2 class="mb-0">{{ stats.systemHealth }}%</h2>
+            <div class="progress-circle" [class]="'bg-' + getHealthClass()">
+              <i class="fas fa-heartbeat"></i>
+            </div>
+          </div>
+          <small class="text-muted">Overall operational status</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-3">
+      <div class="card stat-card">
+        <div class="card-body">
+          <h6 class="card-title text-muted">Total Routes</h6>
+          <div class="d-flex align-items-center justify-content-between">
+            <h2 class="mb-0">{{ stats.totalRoutes }}</h2>
+            <div class="progress-circle bg-primary">
+              <i class="fas fa-bus"></i>
+            </div>
+          </div>
+          <small class="text-muted">Active transit routes</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-3">
+      <div class="card stat-card">
+        <div class="card-body">
+          <h6 class="card-title text-muted">Vehicles Operational</h6>
+          <div class="d-flex align-items-center justify-content-between">
+            <h2 class="mb-0">{{ stats.operationalVehicles }}</h2>
+            <div class="progress-circle bg-success">
+              <i class="fas fa-check"></i>
+            </div>
+          </div>
+          <small class="text-muted">Total vehicles running</small>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-md-3 col-sm-6 mb-3">
+      <div class="card stat-card">
+        <div class="card-body">
+          <h6 class="card-title text-muted">Active Incidents</h6>
+          <div class="d-flex align-items-center justify-content-between">
+            <h2 class="mb-0 text-danger">{{ stats.activeIncidents }}</h2>
+            <div class="progress-circle bg-danger">
+              <i class="fas fa-exclamation"></i>
+            </div>
+          </div>
+          <small class="text-muted">Current alerts</small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Traffic Status -->
+  <div class="row mb-4">
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-traffic-light"></i> Traffic Status by Route
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Route</th>
+                  <th>Status</th>
+                  <th>Speed</th>
+                  <th>Vehicles</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let traffic of trafficData | slice: 0:5">
+                  <td><strong>Route {{ traffic.routeId }}</strong></td>
+                  <td>
+                    <span [class]="'badge bg-' + getStatusBadgeClass(traffic.congestionLevel)">
+                      {{ traffic.congestionLevel }}
+                    </span>
+                  </td>
+                  <td>{{ traffic.averageSpeed }} km/h</td>
+                  <td>{{ traffic.vehicles }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-bell"></i> Recent Alerts
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="alert-list">
+            <div *ngFor="let alert of alerts | slice: 0:5" class="alert-item">
+              <div class="d-flex align-items-start">
+                <i
+                  [class]="'fas fa-' + getAlertIcon(alert.type)"
+                  [class.text-danger]="alert.priority === 'HIGH'"
+                  [class.text-warning]="alert.priority === 'MEDIUM'"
+                  [class.text-info]="alert.priority === 'LOW'"
+                ></i>
+                <div class="ms-3 flex-grow-1">
+                  <h6 class="mb-1">{{ alert.title }}</h6>
+                  <small class="text-muted">{{ alert.timestamp | date: 'short' }}</small>
+                </div>
+              </div>
+            </div>
+            <div *ngIf="alerts.length === 0" class="text-center text-muted py-3">
+              <i class="fas fa-check-circle"></i>
+              <p>No active alerts</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Routes Overview -->
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">
+        <i class="fas fa-list"></i> Active Routes
+      </h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Route #</th>
+              <th>Name</th>
+              <th>Distance</th>
+              <th>Duration</th>
+              <th>Type</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let route of routes | slice: 0:10">
+              <td><strong>{{ route.routeNumber }}</strong></td>
+              <td>{{ route.name }}</td>
+              <td>{{ route.distance }} km</td>
+              <td>{{ route.estimatedDuration }} min</td>
+              <td>{{ route.vehicleType }}</td>
+              <td>
+                <span class="badge bg-success">Active</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>

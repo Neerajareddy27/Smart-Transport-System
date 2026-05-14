@@ -1,0 +1,155 @@
+.transit-map-container {
+  padding: 20px;
+}
+
+.page-header h1 {
+  color: #333;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.card {
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.card-header {
+  border-radius: 8px 8px 0 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.map-container {
+  position: relative;
+  height: 500px;
+  background: linear-gradient(135deg, #e3f2fd 0%, #f3e5f5 100%);
+  border-radius: 0 0 8px 8px;
+  overflow: hidden;
+}
+
+.map-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #999;
+  font-size: 1.1rem;
+  position: relative;
+}
+
+.map-info {
+  text-align: center;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.map-info p {
+  margin-bottom: 10px;
+  color: #333;
+}
+
+.vehicles-list {
+  position: absolute;
+  bottom: 20px;
+  right: 20px;
+  width: 300px;
+  max-height: 300px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow-y: auto;
+  padding: 15px;
+}
+
+.vehicles-list h6 {
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #333;
+}
+
+.list-group {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.list-group-item {
+  border: 1px solid #dee2e6;
+  padding: 10px;
+  margin-bottom: 5px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.list-group-item:hover {
+  background-color: #f0f0f0;
+  border-color: #007bff;
+}
+
+.list-group-item.active {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.btn-group {
+  display: flex;
+  gap: 5px;
+}
+
+.btn-group .btn {
+  flex: 1;
+}
+
+.table {
+  margin-bottom: 0;
+}
+
+.table thead th {
+  background-color: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+}
+
+.progress {
+  height: 0.5rem;
+}
+
+@media (max-width: 1024px) {
+  .vehicles-list {
+    width: 250px;
+  }
+}
+
+@media (max-width: 768px) {
+  .transit-map-container {
+    padding: 10px;
+  }
+
+  .map-container {
+    height: 350px;
+  }
+
+  .vehicles-list {
+    width: 200px;
+    bottom: 10px;
+    right: 10px;
+  }
+
+  .col-lg-3,
+  .col-lg-9 {
+    margin-bottom: 20px;
+  }
+}

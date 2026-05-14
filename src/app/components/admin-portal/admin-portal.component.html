@@ -1,0 +1,362 @@
+<div class="admin-portal-container">
+  <div class="page-header">
+    <h1>
+      <i class="fas fa-cogs"></i> Administration Portal
+    </h1>
+    <p class="lead">Manage transit routes, schedules, and incidents</p>
+  </div>
+
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success alert-dismissible fade show">
+    <i class="fas fa-check-circle"></i> {{ successMessage }}
+    <button
+      type="button"
+      class="btn-close"
+      (click)="successMessage = null"
+    ></button>
+  </div>
+  <div *ngIf="errorMessage" class="alert alert-danger alert-dismissible fade show">
+    <i class="fas fa-exclamation-circle"></i> {{ errorMessage }}
+    <button
+      type="button"
+      class="btn-close"
+      (click)="errorMessage = null"
+    ></button>
+  </div>
+
+  <!-- Tab Navigation -->
+  <ul class="nav nav-tabs mb-4" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button
+        class="nav-link"
+        [class.active]="activeTab === 'dashboard'"
+        (click)="selectTab('dashboard')"
+      >
+        <i class="fas fa-chart-line"></i> Dashboard
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button
+        class="nav-link"
+        [class.active]="activeTab === 'schedules'"
+        (click)="selectTab('schedules')"
+      >
+        <i class="fas fa-calendar"></i> Schedules
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button
+        class="nav-link"
+        [class.active]="activeTab === 'incidents'"
+        (click)="selectTab('incidents')"
+      >
+        <i class="fas fa-exclamation-triangle"></i> Incidents
+      </button>
+    </li>
+  </ul>
+
+  <!-- Dashboard Tab -->
+  <div *ngIf="activeTab === 'dashboard'">
+    <div class="row mb-4">
+      <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <h6 class="text-muted">Total Routes</h6>
+            <h3>{{ systemStats.totalRoutes }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <h6 class="text-muted">Total Vehicles</h6>
+            <h3>{{ systemStats.totalVehicles }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <h6 class="text-muted">Active Incidents</h6>
+            <h3 class="text-danger">{{ systemStats.activeIncidents }}</h3>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 mb-3">
+        <div class="card stat-card">
+          <div class="card-body">
+            <h6 class="text-muted">System Health</h6>
+            <h3 [class]="'text-' + getHealthClass()">{{ systemStats.systemHealth }}%</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schedules Tab -->
+  <div *ngIf="activeTab === 'schedules'">
+    <div class="mb-3">
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="openScheduleForm()"
+      >
+        <i class="fas fa-plus"></i> Add New Schedule
+      </button>
+    </div>
+
+    <!-- Schedule Form -->
+    <div *ngIf="showScheduleForm" class="card mb-4">
+      <div class="card-header bg-info text-white">
+        <h5 class="mb-0">
+          {{ editingSchedule ? 'Edit Schedule' : 'Create New Schedule' }}
+        </h5>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="scheduleForm" (ngSubmit)="saveSchedule()">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Route ID</label>
+              <input
+                type="text"
+                class="form-control"
+                formControlName="routeId"
+              />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Day of Week</label>
+              <select class="form-select" formControlName="dayOfWeek">
+                <option value="">Select Day</option>
+                <option value="0">Monday</option>
+                <option value="1">Tuesday</option>
+                <option value="2">Wednesday</option>
+                <option value="3">Thursday</option>
+                <option value="4">Friday</option>
+                <option value="5">Saturday</option>
+                <option value="6">Sunday</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Departure Time</label>
+              <input
+                type="time"
+                class="form-control"
+                formControlName="departureTime"
+              />
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Arrival Time</label>
+              <input
+                type="time"
+                class="form-control"
+                formControlName="arrivalTime"
+              />
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Frequency (minutes)</label>
+            <input
+              type="number"
+              class="form-control"
+              formControlName="frequency"
+            />
+          </div>
+
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+              {{ isLoading ? 'Saving...' : 'Save Schedule' }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="closeScheduleForm()"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Schedules List -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Current Schedules</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table table-hover">
+            <thead>
+              <tr>
+                <th>Route ID</th>
+                <th>Day</th>
+                <th>Departure</th>
+                <th>Arrival</th>
+                <th>Frequency</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let schedule of schedules">
+                <td>{{ schedule.routeId }}</td>
+                <td>{{ schedule.dayOfWeek }}</td>
+                <td>{{ schedule.departureTime }}</td>
+                <td>{{ schedule.arrivalTime }}</td>
+                <td>{{ schedule.frequency }} min</td>
+                <td>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-warning me-2"
+                    (click)="openScheduleForm(schedule)"
+                  >
+                    <i class="fas fa-edit"></i>
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-danger"
+                    (click)="deleteSchedule(schedule.id)"
+                  >
+                    <i class="fas fa-trash"></i>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incidents Tab -->
+  <div *ngIf="activeTab === 'incidents'">
+    <div class="mb-3">
+      <button
+        type="button"
+        class="btn btn-danger"
+        (click)="showIncidentForm = !showIncidentForm"
+      >
+        <i class="fas fa-plus"></i> Report Incident
+      </button>
+    </div>
+
+    <!-- Incident Form -->
+    <div *ngIf="showIncidentForm" class="card mb-4">
+      <div class="card-header bg-danger text-white">
+        <h5 class="mb-0">Report New Incident</h5>
+      </div>
+      <div class="card-body">
+        <form [formGroup]="incidentForm" (ngSubmit)="reportIncident()">
+          <div class="row">
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Incident Type</label>
+              <select class="form-select" formControlName="type">
+                <option value="">Select Type</option>
+                <option *ngFor="let type of incidentTypes" [value]="type">
+                  {{ type }}
+                </option>
+              </select>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label">Severity</label>
+              <select class="form-select" formControlName="severity">
+                <option value="">Select Severity</option>
+                <option *ngFor="let severity of incidentSeverities" [value]="severity">
+                  {{ severity }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea
+              class="form-control"
+              formControlName="description"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Affected Routes (comma-separated)</label>
+            <input
+              type="text"
+              class="form-control"
+              placeholder="e.g., R1, R2, R3"
+              formControlName="affectedRoutes"
+            />
+          </div>
+
+          <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+            <button type="submit" class="btn btn-danger" [disabled]="isLoading">
+              {{ isLoading ? 'Reporting...' : 'Report Incident' }}
+            </button>
+            <button
+              type="button"
+              class="btn btn-secondary"
+              (click)="closeIncidentForm()"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Incidents List -->
+    <div class="card">
+      <div class="card-header">
+        <h5 class="mb-0">Active Incidents</h5>
+      </div>
+      <div class="card-body">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Severity</th>
+                <th>Description</th>
+                <th>Routes</th>
+                <th>Timestamp</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                *ngFor="let incident of incidents | slice: 0:10"
+                [class.table-danger]="incident.severity === 'CRITICAL'"
+                [class.table-warning]="incident.severity === 'HIGH'"
+              >
+                <td>{{ incident.type }}</td>
+                <td>
+                  <span
+                    class="badge"
+                    [class]="'bg-' + getSeverityBadgeClass(incident.severity)"
+                  >
+                    {{ incident.severity }}
+                  </span>
+                </td>
+                <td>{{ incident.description }}</td>
+                <td>{{ incident.affectedRoutes.join(', ') }}</td>
+                <td>{{ incident.timestamp | date: 'short' }}</td>
+                <td>
+                  <button
+                    type="button"
+                    class="btn btn-sm btn-success"
+                    (click)="resolveIncident(incident.id)"
+                    [disabled]="!!incident.resolvedTime"
+                  >
+                    <i class="fas fa-check"></i> Resolve
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

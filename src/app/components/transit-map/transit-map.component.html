@@ -1,0 +1,236 @@
+<div class="transit-map-container">
+  <div class="page-header">
+    <h1>
+      <i class="fas fa-map-marked-alt"></i> Interactive Transit Map
+    </h1>
+  </div>
+
+  <div class="row">
+    <!-- Map Controls and Filters -->
+    <div class="col-lg-3">
+      <div class="card">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-sliders-h"></i> Map Controls
+          </h5>
+        </div>
+        <div class="card-body">
+          <!-- Zoom Controls -->
+          <div class="mb-3">
+            <label class="form-label">Zoom Level: {{ mapZoom }}</label>
+            <div class="btn-group w-100" role="group">
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                (click)="zoomIn()"
+              >
+                <i class="fas fa-plus"></i> Zoom In
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-primary"
+                (click)="zoomOut()"
+              >
+                <i class="fas fa-minus"></i> Zoom Out
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            class="btn btn-secondary w-100 mb-3"
+            (click)="centerMap()"
+          >
+            <i class="fas fa-crosshairs"></i> Center Map
+          </button>
+
+          <!-- Filters -->
+          <div class="mb-3">
+            <h6>Filters</h6>
+
+            <div class="mb-2">
+              <label class="form-label">Vehicle Type</label>
+              <select
+                class="form-select form-select-sm"
+                [(ngModel)]="filters.vehicleType"
+              >
+                <option value="">All Types</option>
+                <option value="BUS">Bus</option>
+                <option value="METRO">Metro</option>
+                <option value="TRAM">Tram</option>
+                <option value="BIKE">Bike</option>
+              </select>
+            </div>
+
+            <div class="mb-2">
+              <label class="form-label">Status</label>
+              <select
+                class="form-select form-select-sm"
+                [(ngModel)]="filters.status"
+              >
+                <option value="">All Status</option>
+                <option value="OPERATIONAL">Operational</option>
+                <option value="DELAYED">Delayed</option>
+                <option value="MAINTENANCE">Maintenance</option>
+              </select>
+            </div>
+
+            <div class="d-grid gap-2">
+              <button
+                type="button"
+                class="btn btn-primary btn-sm"
+                (click)="applyFilters()"
+              >
+                <i class="fas fa-check"></i> Apply Filters
+              </button>
+              <button
+                type="button"
+                class="btn btn-outline-primary btn-sm"
+                (click)="resetFilters()"
+              >
+                <i class="fas fa-redo"></i> Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selected Vehicle Details -->
+      <div *ngIf="selectedVehicle" class="card mt-3">
+        <div class="card-header bg-info text-white">
+          <h5 class="mb-0">
+            <i class="fas fa-info-circle"></i> Vehicle Details
+          </h5>
+        </div>
+        <div class="card-body">
+          <p>
+            <strong>Vehicle #{{ selectedVehicle.vehicleNumber }}</strong>
+          </p>
+          <p>
+            Type: <span class="badge bg-secondary">{{ selectedVehicle.type }}</span>
+          </p>
+          <p>
+            Status:
+            <span
+              class="badge"
+              [style.backgroundColor]="getStatusColor(selectedVehicle.status)"
+            >
+              {{ selectedVehicle.status }}
+            </span>
+          </p>
+          <p>
+            Passengers: {{ selectedVehicle.currentPassengers }}/{{ selectedVehicle.capacity }}
+            ({{ getPassengerPercentage(selectedVehicle) }}%)
+          </p>
+          <div class="progress mb-2">
+            <div
+              class="progress-bar"
+              [style.width]="getPassengerPercentage(selectedVehicle) + '%'"
+            ></div>
+          </div>
+          <p class="mb-0">
+            Location: {{ selectedVehicle.location.latitude }}, {{ selectedVehicle.location.longitude }}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map Area -->
+    <div class="col-lg-9">
+      <div class="card">
+        <div class="card-body p-0">
+          <!-- Map Container -->
+          <div class="map-container">
+            <!-- Map Placeholder - In a real app, use Leaflet or Google Maps -->
+            <div class="map-placeholder">
+              <div class="map-info">
+                <p>
+                  <i class="fas fa-map"></i> Map Center: {{ mapCenter.lat }}, {{ mapCenter.lng }}
+                </p>
+                <p>Zoom Level: {{ mapZoom }}</p>
+              </div>
+
+              <!-- Vehicle Markers List -->
+              <div class="vehicles-list">
+                <h6>Vehicles on Map ({{ vehicles.length }})</h6>
+                <div class="list-group">
+                  <button
+                    *ngFor="let vehicle of vehicles | slice: 0:10"
+                    type="button"
+                    class="list-group-item list-group-item-action"
+                    [class.active]="selectedVehicle?.id === vehicle.id"
+                    (click)="selectVehicle(vehicle)"
+                  >
+                    <div class="d-flex justify-content-between align-items-center">
+                      <div>
+                        <span class="me-2">{{ getVehicleIcon(vehicle.type) }}</span>
+                        <strong>{{ vehicle.vehicleNumber }}</strong>
+                        <small class="text-muted">{{ vehicle.type }}</small>
+                      </div>
+                      <span
+                        class="badge"
+                        [style.backgroundColor]="getStatusColor(vehicle.status)"
+                      >
+                        {{ vehicle.status }}
+                      </span>
+                    </div>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Traffic Status -->
+      <div class="card mt-3">
+        <div class="card-header">
+          <h5 class="mb-0">
+            <i class="fas fa-traffic-light"></i> Traffic Status
+          </h5>
+        </div>
+        <div class="card-body">
+          <div class="table-responsive">
+            <table class="table table-sm">
+              <thead>
+                <tr>
+                  <th>Route</th>
+                  <th>Status</th>
+                  <th>Avg Speed</th>
+                  <th>Vehicles</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr
+                  *ngFor="let traffic of trafficData | slice: 0:5"
+                  [class.table-warning]="traffic.congestionLevel === 'HEAVY'"
+                  [class.table-danger]="traffic.congestionLevel === 'SEVERE'"
+                >
+                  <td>
+                    <button
+                      type="button"
+                      class="btn btn-link"
+                      (click)="selectRoute(traffic)"
+                    >
+                      Route {{ traffic.routeId }}
+                    </button>
+                  </td>
+                  <td>
+                    <span
+                      class="badge"
+                      [style.backgroundColor]="getCongestionColor(traffic.congestionLevel)"
+                    >
+                      {{ traffic.congestionLevel }}
+                    </span>
+                  </td>
+                  <td>{{ traffic.averageSpeed }} km/h</td>
+                  <td>{{ traffic.vehicles }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
